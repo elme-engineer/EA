@@ -36,11 +36,33 @@ void rotateLeft(int l, int c, std::vector<std::vector<int>>& grid){
 
 int aztecVault(int moves, std::vector<std::vector<int>>& grid){
 
-    if (moves > maxMoves) // limit moves exceded
-        return -1;
+    /* std::cout << "----------VERIFY-------------\n";
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+           std::cout << grid[i][j] << " ";
+        }
 
-    if(vaultDone(grid))
-        return minMoves;
+        std::cout << "\n";
+    }
+    std::cout << "-----------END-----VERIFY-------------\n";
+ */
+    if(vaultDone(grid)){
+
+       // std::cout << "\nVAULT ID DONE\n";
+        if(moves < minMoves){
+
+            minMoves = moves;
+            return minMoves;
+        }
+            
+    }
+        
+
+    if (moves == maxMoves) // limit moves exceded
+        return 99999;
+
 
     for (int i = 0; i < rows - 1; ++i) {
         for (int j = 0; j < cols - 1; ++j) {
@@ -62,11 +84,14 @@ int aztecVault(int moves, std::vector<std::vector<int>>& grid){
 int main() {
 
     int tCases;
-    std::vector<std::vector<int>> grid;
+    int moves;
+    
 
     std::cin >> tCases;
 
     for (int i = 0; i < tCases; ++i) {
+
+        std::vector<std::vector<int>> grid;
 
         std::cin >> rows >> cols >> maxMoves;
 
@@ -78,9 +103,18 @@ int main() {
             }
         }
 
+        minMoves = 99999;
+
+        moves = aztecVault(0, grid);
+        if(moves > maxMoves)
+            std::cout << "the treasure is lost!" << "\n";
+        else
+            std::cout << moves << "\n";
+
+        
     }
 
-    std::cout << aztecVault(0, grid);
+    
 
     return 0;
 }
