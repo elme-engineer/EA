@@ -2,8 +2,8 @@
 #include <vector>
 #include <algorithm>
 
-int maxMoves, minMoves;
-int rows, cols, left, right, doubleRight;
+int maxMoves, minMoves, minRight;
+int rows, cols, left = 0, right = 0, doubleRight = 0, initialLine, finalLine;
 
 bool vaultDone(const std::vector<std::vector<int>>& grid){
 
@@ -13,27 +13,59 @@ bool vaultDone(const std::vector<std::vector<int>>& grid){
                 return false;
             }
         }
-        // std::vector<int>& rowI = grid[i];
-        // if(std::adjacent_find( rowI.begin(), rowI.end(), std::not_equal_to<>() ) != rowI.end())
-        //     return false;
+        if(i > 2 && rows - 1 - i == 2)
+            initialLine = i + 1;
+
 
     }
 
     return true;
 }
 
-bool impossibleMatrix(const std::vector<std::vector<int>>& grid){
+bool impossibleVault(const std::vector<std::vector<int>> &grid)
+{
+    int array[5] = {0};
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
 
+            if (grid[i][j] != i + 1)
+            {
+                array[grid[i][j] - 1] += abs(i+1 - grid[i][j]);
+                if (array[grid[i][j] - 1] > maxMoves)
+                    return true;
+            }
+        }
+    }
+    return false;
+}
 
-    
+bool moreOcurrences(const std::vector<int> &numOcurrences){
+
+    for (int m = 0; m < 5; m++){
+            
+            
+            if(numOcurrences[m] > cols)
+                return true;
+    }
 
     return false;
 }
 
-bool blockDone(std::vector<std::vector<int>>& grid, int r, int c){
+void printVault(const std::vector<std::vector<int>>& grid){
 
-    return (grid[r][c] == grid[r][c + 1]);
-         
+    std::cout << "----------VERIFY-------------\n";
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; j++)
+        {
+           std::cout << grid[i][j] << " ";
+        }
+
+        std::cout << "\n";
+    }
+    std::cout << "-----------END-----VERIFY-------------\n";
 }
 
 void rotateRight(int l, int c, std::vector<std::vector<int>>& grid){
@@ -52,52 +84,70 @@ void rotateLeft(int l, int c, std::vector<std::vector<int>>& grid){
 
 }
 
-int aztecVault(int moves, std::vector<std::vector<int>>& grid, int line, int col){
+void confirmFinalLine(const std::vector<std::vector<int>>& grid){
 
-    /* std::cout << "----------VERIFY-------------\n";
-    for (int i = 0; i < rows; i++)
+    //down to up
+    for (int i = finalLine; i >= initialLine + 2; i--)
     {
         for (int j = 0; j < cols; j++)
         {
-           std::cout << grid[i][j] << " ";
+            if (grid[i][j] != i + 1)
+            {
+                return;
+            }
+            
         }
-
-        std::cout << "\n";
+        
+        finalLine = i;
     }
-    std::cout << "-----------END-----VERIFY-------------\n";  */
+
+}
+
+int aztecVault(int moves, std::vector<std::vector<int>>& grid, int line, int col){
+
+    if (moves >= minMoves)
+        return 9999;
  
     if(vaultDone(grid)){
 
-       // std::cout << "\nVAULT ID DONE\n";
-        if(moves < minMoves){
+       if(moves < minMoves){
 
-            minMoves = moves;
-            return minMoves;
+            minMoves = moves;     
         }
-            
-    }
         
+        return minMoves;         
+    }
 
-    if (moves >= maxMoves) // limit moves exceded
-        return 99999;
+    confirmFinalLine(grid);
 
+    for (int i = initialLine; i < finalLine; ++i) {
 
-    for (int i = 0; i < rows - 1; ++i) {
+        //std::cout << "I: " << finalLine << "\n";
         for (int j = 0; j < cols - 1; ++j) {
+
+
             if(i == line && j == col){
                 continue;
             }
 
-                rotateLeft(i, j, grid);
-                left = aztecVault(moves + 1, grid, i, j);
-                rotateRight(i, j, grid);
+                if(minMoves == moves + 1)
+                    break;
                 rotateRight(i, j, grid);
                 right = aztecVault(moves + 1, grid, i, j);
                 rotateLeft(i, j, grid);
 
-                minMoves = std::min(minMoves, std::min(left, right));
+                rotateLeft(i, j, grid);
+                left = aztecVault(moves + 1, grid, i, j);
+                rotateRight(i, j, grid);
+
+                rotateRight(i, j, grid);
+                rotateRight(i, j, grid);
+                doubleRight = aztecVault(moves + 2, grid, i, j);
+                rotateLeft(i, j, grid);
+                rotateLeft(i, j, grid);
                 
-            
+                minRight = std::min(right, doubleRight);
+                minMoves = std::min(minMoves, std::min(left, minRight));
         }
     }
 
@@ -108,31 +158,47 @@ int main() {
 
     int tCases;
     int moves;
-    
 
     std::cin >> tCases;
 
     for (int i = 0; i < tCases; ++i) {
 
-        std::vector<std::vector<int>> grid;
-
         std::cin >> rows >> cols >> maxMoves;
 
-        grid.assign(rows, std::vector<int>(cols, 0));
+        std::vector<std::vector<int>> grid(rows, std::vector<int>(cols));
+
+
+        std::vector<int> numOcurrences(5,0);
 
         for (int j = 0; j < rows; ++j) {
             for (int k = 0; k < cols; ++k) {
+
                 std::cin >> grid[j][k];
+
+                numOcurrences[grid[j][k] - 1] += 1;
+                  
             }
         }
+        
 
-        if(impossibleMatrix(grid)){
-         
+        if (moreOcurrences(numOcurrences)){
             std::cout << "the treasure is lost!" << "\n";
-            return 0;
+            continue;
+        }
+        
+        
+        if(impossibleVault(grid)){
+            std::cout << "the treasure is lost!" << "\n";
+            continue;
         }
 
-        minMoves = 99999;
+        minMoves = maxMoves + 1;
+        left = 0;
+        right = 0;
+        doubleRight = 0;
+        initialLine = 0;
+        finalLine = rows - 1;
+
 
         moves = aztecVault(0, grid, -10, -10);
         if(moves > maxMoves)
